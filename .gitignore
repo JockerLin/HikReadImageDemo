@@ -1,3 +1,3 @@
 *.opendb
 .vs/
-./RawDataFormatConvert/x64/
+RawDataFormatConvert/x64/

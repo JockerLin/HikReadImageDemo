@@ -249,16 +249,21 @@ int main()
             break;
         }
 
-		
-
         // open device
 		// 打开设备 多次打开会失败
         nRet = MV_CC_OpenDevice(handle);
         if (MV_OK != nRet)
         {
             printf("Open Device fail! nRet [0x%x]\n", nRet);
-            break;
+            //break;
         }
+
+		nRet = MV_CC_SetGamma(handle, 0.15);
+		if (MV_OK != nRet)
+		{
+			printf("Set Gamma Failed! nRet [0x%x]\n", nRet);
+			break;
+		}
 
         // Detection network optimal package size(It only works for the GigE camera)
 		// 检测网络最佳封装尺寸(只适用于GigE摄像机)
@@ -291,6 +296,25 @@ int main()
 		// 软触发则开启 其他触发则对应设置即可
 		/*nRet = MV_CC_SetEnumValue(handle, "TriggerMode", MV_TRIGGER_MODE_ON);
 		nRet = MV_CC_SetEnumValue(handle, "TriggerSource", MV_TRIGGER_SOURCE_SOFTWARE);*/
+
+		// 设置行触发使能以及数值
+		/*MV_CC_SetBoolValue(handle, "AcquisitionLineRateEnable", true);
+		MV_CC_SetIntValue(handle, "AcquisitionLineRate", 12345);*/
+		// SetBoolValue("AcquisitionLineRateEnable", param), "AcquisitionLineRateEnable")
+
+		// 设置增益
+		MV_XML_AccessMode access22;
+		memset(&access22, 0, sizeof(MV_XML_AccessMode));
+		auto access23 = MV_XML_GetNodeAccessMode(handle, "Gain", &access22);
+		if (access23 != AM_RW) {
+			printf("no allow write");
+		}
+		MVCC_ENUMVALUE stParam2;
+		memset(&stParam2, 0, sizeof(MVCC_ENUMVALUE));
+		if (MV_CC_GetEnumValue(handle, "PreampGain", &stParam2) != MV_OK)
+		{
+			printf("获取PreampGain失败");
+		}
 
         // Get payload size
         MVCC_INTVALUE stParam;
@@ -333,6 +357,7 @@ int main()
 			nRet = MV_CC_GetOneFrameTimeout(handle, pData, g_nPayloadSize, &stImageInfo, 1000);
 			if (nRet == MV_OK)
 			{
+				// 为什么是 4096 * 480 ?
 				printf("Get One Frame: Width[%d], Height[%d], nFrameNum[%d]\n",
 					stImageInfo.nWidth, stImageInfo.nHeight, stImageInfo.nFrameNum);
 			}
@@ -356,6 +381,7 @@ int main()
 				bConvertRet = Convert2Ipl(&stImageInfo, pData);
 			}
 
+			cv::rotate(cv_image, cv_image, cv::ROTATE_180);
 			/*cv::Mat cv_image;
 			cv_image.data = pData;*/
 
@@ -402,6 +428,7 @@ int main()
         nRet = MV_CC_DestroyHandle(handle);
         if (MV_OK != nRet)
         {
+			// llngsa 
             printf("Destroy Handle fail! nRet [0x%x]\n", nRet);
             break;
         }
